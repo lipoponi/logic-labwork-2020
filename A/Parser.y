@@ -1,6 +1,6 @@
 {
-module Parser (parseString, parseError) where
-import Lexer
+module A.Parser (parseString, parseError) where
+import A.Lexer
 }
 
 %name parseTokens

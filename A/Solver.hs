@@ -1,6 +1,6 @@
-module A (solve) where
-import Parser
+module A.Solver (main) where
+import A.Parser
 
-solve = do
+main = do
     contents <- getContents;
     (putStrLn . show . parseString) contents;

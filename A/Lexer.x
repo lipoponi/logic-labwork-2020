@@ -1,5 +1,5 @@
 {
-module Lexer where
+module A.Lexer where
 }
 
 %wrapper "basic"

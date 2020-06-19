@@ -1,11 +1,10 @@
-all: Main.hs Parser.y Lexer.x
-	alex Lexer.x
-	happy Parser.y
+all: Main.hs
+	$(MAKE) -C A all
 	ghc Main.hs -outputdir ./out
 
 run: Main
 	./Main
 
 clean:
-	rm -rf ./out
-	rm Lexer.hs Parser.hs Main
+	$(MAKE) -C A clean
+	rm -rf ./out Main
