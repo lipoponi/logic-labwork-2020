@@ -1,4 +1,4 @@
-all: A.hs Parser.y Lexer.x
+all: Main.hs Parser.y Lexer.x
 	alex Lexer.x
 	happy Parser.y
 	ghc Main.hs -outputdir ./out
