@@ -1,0 +1,6 @@
+out/
+Parser.hs
+Lexer.hs
+Main
+input
+output
