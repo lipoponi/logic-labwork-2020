@@ -1,5 +1,5 @@
 {
-module Parser (parseTokens, parseError) where
+module Parser (parseString, parseError) where
 import Lexer
 }
 
@@ -31,6 +31,9 @@ Exp : Exp '->' Exp { Impl $1 $3 }
     | var { Var $1 }
 
 {
+parseString :: String -> Exp
+parseString = parseTokens . alexScanTokens
+
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
 
