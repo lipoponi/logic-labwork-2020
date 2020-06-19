@@ -3,4 +3,4 @@ all: Lexer.x Parser.y
 	happy Parser.y
 
 clean:
-	rm Lexer.hs Parser.hs
+	rm -f Lexer.hs Parser.hs
