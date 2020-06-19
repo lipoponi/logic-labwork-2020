@@ -9,5 +9,5 @@ clean:
 	$(MAKE) -C A clean
 	rm -rf ./out Main archive.zip
 
-zip:
+zip: clean
 	zip -r archive.zip Makefile Main.hs ./A
