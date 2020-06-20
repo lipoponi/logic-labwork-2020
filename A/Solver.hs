@@ -3,4 +3,4 @@ import A.Parser
 
 main = do
     contents <- getContents;
-    (putStrLn . show . parseString) contents;
+    (putStrLn . show . parseExp) contents;

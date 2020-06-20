@@ -1,5 +1,5 @@
 {
-module A.Parser (parseString, parseError) where
+module A.Parser (parseExp, parseError) where
 import A.Lexer
 }
 
@@ -23,16 +23,16 @@ import A.Lexer
 
 %%
 
-Exp : Exp '->' Exp { Impl $1 $3 }
-    | Exp '|' Exp { Disj $1 $3 }
-    | Exp '&' Exp { Conj $1 $3 }
-    | '!' Exp { Neg $2 }
-    | '(' Exp ')' { $2 }
-    | var { Var $1 }
+Exp : Exp '->' Exp  { Impl $1 $3 }
+    | Exp '|' Exp   { Disj $1 $3 }
+    | Exp '&' Exp   { Conj $1 $3 }
+    | '!' Exp       { Neg $2 }
+    | '(' Exp ')'   { $2 }
+    | var           { Var $1 }
 
 {
-parseString :: String -> Exp
-parseString = parseTokens . alexScanTokens
+parseExp :: String -> Exp
+parseExp = parseTokens . alexScanTokens
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"

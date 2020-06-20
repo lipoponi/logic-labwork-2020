@@ -12,8 +12,8 @@ tokens :-
     [A-Z][0-9A-Z\']*  { \s -> TVar s }
 
 {
-data Token =
-    TSym String |
-    TVar String
+data Token
+    = TSym String
+    | TVar String
     deriving (Eq,Show)
 }
