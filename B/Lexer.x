@@ -7,8 +7,7 @@ module B.Lexer where
 tokens :-
 
     $white+           ;
-    \|\-              { \s -> TSym s }
-    [!\,\&\|\(\)]     { \s -> TSym s }
+    [!\&\|\(\)]       { \s -> TSym s }
     \->               { \s -> TSym s }
     [A-Z][0-9A-Z\']*  { \s -> TVar s }
 

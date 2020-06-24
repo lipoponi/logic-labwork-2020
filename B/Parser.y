@@ -7,17 +7,13 @@ import B.Lexer
 %tokentype { Token }
 %error { parseError }
 
-%left '|-'
-%left ','
 %right '->'
 %left '|'
 %left '&'
-%left '!'
+%right '!'
 
 %token 
       var             { TVar $$ }
-      '|-'            { TSym "|-" }
-      ','             { TSym "," }
       '->'            { TSym "->" }
       '|'             { TSym "|" }
       '&'             { TSym "&" }
@@ -26,15 +22,6 @@ import B.Lexer
       ')'             { TSym ")" }
 
 %%
-
-Line : Statement    { $1 }
-     | Expression   { $1 }
-
-Statement : Context '|-' Expression { Stmt $3 $1 }
-          | '|-' Expression         { Stmt $2 [] }
-
-Context : Expression ',' Context    { $1 : $3 }
-        | Expression                { [$1] }
 
 Expression : Expression '&' Expression  { Conj $1 $3 }
            | Expression '|' Expression  { Disj $1 $3 }
@@ -59,7 +46,7 @@ data Exp
     | Var String
     deriving (Eq,Ord)
 
-showBinOp op l r = "(" ++ op ++ "," ++ (show l) ++ "," ++ (show r) ++ ")"
+showBinOp op l r = "(" ++ (show l) ++ " " ++ op ++ " " ++ (show r) ++ ")"
 
 instance Show Exp where
     show (Stmt exp []) = "|- " ++ (show exp)
@@ -68,6 +55,6 @@ instance Show Exp where
     show (Impl l r) = showBinOp "->" l r
     show (Disj l r) = showBinOp "|" l r
     show (Conj l r) = showBinOp "&" l r
-    show (Neg inner) = "(!" ++ (show inner) ++ ")"
+    show (Neg inner) = "!" ++ (show inner)
     show (Var name) = name
 }
