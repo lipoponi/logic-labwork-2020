@@ -53,58 +53,61 @@ getAxiom x = helper 1 axioms
         Nothing -> Nothing
         _ -> Just (Map.union l r)
 
-nextState :: Exp -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> (Map.Map Exp Int,Map.Map Exp (Map.Map Exp Int),Map.Map Exp (Int,Int))
-nextState x index a b c = (newA,newB,newC)
+insertIfAbsent :: (Ord k) => k -> a -> Map.Map k a -> Map.Map k a
+insertIfAbsent = Map.insertWith (flip const)
+
+newA :: Exp -> Int -> Map.Map Exp Int -> Map.Map Exp Int
+newA = insertIfAbsent
+
+newB :: Exp -> Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Map.Map Exp Int)
+newB x index b = Map.delete x tmpB
   where
-    insertIfAbsent = Map.insertWith (flip const)
-    newA = insertIfAbsent x index a
     tmpB = case x of
-      Impl l r -> Map.insertWith (flip Map.union) l (Map.singleton r index) b
+      Impl l r -> Map.insertWith (flip Map.union) l (Map.singleton r index) b -- check optimization
       _ -> b
-    newB = Map.delete x tmpB
+
+newC :: Exp -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> Map.Map Exp (Int,Int)
+newC x index a b c = Map.foldrWithKey (\k rIndex -> insertIfAbsent k (index,rIndex)) tmpC (Map.findWithDefault Map.empty x b)
+  where
     tmpC = case x of
       Impl l r -> case Map.lookup l a of
         Just lIndex -> insertIfAbsent r (lIndex,index) c
         _ -> c
       _ -> c
-    newC = Map.foldrWithKey (\k rIndex -> insertIfAbsent k (index,rIndex)) tmpC (Map.findWithDefault Map.empty x b)
 
-isCorrect :: Exp -> [Exp] -> [Exp] -> Bool
-isCorrect statement context proof = (proof /= []) && (last proof == statement) && (helper proof 1 Map.empty Map.empty Map.empty)
+minimize :: Exp -> [Exp] -> [Exp] -> Maybe [Exp]
+minimize statement context proof = case helper proof 1 Map.empty Map.empty Map.empty of
+  Nothing -> Nothing
+  Just set -> Just (extract proof 1 set)
   where
     hypoSet :: Set.Set Exp
     hypoSet = Set.fromList context
 
-    helper :: [Exp] -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> Bool
-    helper [] _ _ _ _ = True
-    helper (x:xs) index a b c = let (newA,newB,newC) = nextState x index a b c in
-      if Set.member x hypoSet || getAxiom x /= Nothing || Map.member x c then
-        helper xs (succ index) newA newB newC
-      else False
-
-minimize :: Exp -> [Exp] -> [Exp] -> [Exp]
-minimize statement context proof = fst $ helper proof 1 Map.empty Map.empty Map.empty
-  where
-    hypoSet :: Set.Set Exp
-    hypoSet = Set.fromList context
-
-    helper :: [Exp] -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> ([Exp],Set.Set Int)
-    helper [x] _ _ _ c = ([x],
-      (if Set.member x hypoSet || getAxiom x /= Nothing then
-        Set.empty
+    helper :: [Exp] -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> Maybe (Set.Set Int)
+    helper [x] index _ _ c =
+      if x /= statement then
+        Nothing
+      else if Set.member x hypoSet || getAxiom x /= Nothing then
+        Just (Set.singleton index)
       else
         case Map.lookup x c of
-          Just (a,b) -> Set.insert a $ Set.singleton b))
+          Just (a,b) -> Just (Set.fromList $ a:b:[index])
+          Nothing -> Nothing
     helper (x:xs) index a b c = let
-      (newA,newB,newC) = nextState x index a b c
-      (goods,used) = helper xs (succ index) newA newB newC
-      newUsed =
-        if Set.member x hypoSet || getAxiom x /= Nothing then
-          used
-        else
-          case Map.lookup x c of
-            Just (a,b) -> Set.insert a $ Set.insert b used
-      in if Set.member index used then (x:goods,newUsed) else (goods,used)
+      suffix = helper xs (succ index) (newA x index a) (newB x index b) (newC x index a b c)
+      in case suffix of
+        Nothing -> Nothing
+        Just used ->
+          if Set.member x hypoSet || getAxiom x /= Nothing then
+            suffix
+          else case Map.lookup x c of
+            Nothing -> Nothing
+            Just (a,b) -> if Set.notMember index used then suffix else
+              Just (Set.insert a $ Set.insert b used)
+
+    extract :: [Exp] -> Int -> Set.Set Int -> [Exp]
+    extract [] _ _ = []
+    extract (x:xs) index set = (if Set.member index set then (x:) else id) (extract xs (succ index) set)
 
 annotate :: Exp -> [Exp] -> [Exp] -> [String]
 annotate statement context proof = helper proof 1 Map.empty Map.empty Map.empty
@@ -114,8 +117,7 @@ annotate statement context proof = helper proof 1 Map.empty Map.empty Map.empty
 
     helper :: [Exp] -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> [String]
     helper [] _ _ _ _ = []
-    helper (x:xs) index a b c = let (newA,newB,newC) = nextState x index a b c in
-      (fn x index c) : (helper xs (succ index) newA newB newC)
+    helper (x:xs) index a b c = (fn x index c) : (helper xs (succ index) (newA x index a) (newB x index b) (newC x index a b c))
 
     fn :: Exp -> Int -> Map.Map Exp (Int,Int) -> String
     fn x index c = "[" ++ (show index) ++ ". " ++ (
@@ -128,10 +130,9 @@ annotate statement context proof = helper proof 1 Map.empty Map.empty Map.empty
       ) ++ "] " ++ (show x)
 
 foo :: [String] -> [String]
-foo contents =
-  if isCorrect statement context proof
-    then (show $ Stmt statement context) : (annotate statement context . minimize statement context $ proof)
-    else ["Proof is incorrect"]
+foo contents = case minimize statement context proof of
+  Nothing -> ["Proof is incorrect"]
+  Just proof -> (show $ Stmt statement context) : (annotate statement context proof)
   where
     (contextS:statementS:[]) = Split.splitOn "|-" (head contents)
     statement = parse statementS
