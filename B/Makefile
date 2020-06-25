@@ -1,6 +1,5 @@
-all: Lexer.x Parser.y
-	alex Lexer.x
-	happy Parser.y
+all: Parser.y
+	happy Parser.y --strict --ghc
 
 clean:
 	rm -f Lexer.hs Parser.hs

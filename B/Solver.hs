@@ -3,7 +3,7 @@ import B.Parser
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.List.Split as Split
-import Data.Char (isSpace)
+import Data.Char (isSpace, isUpper)
 
 axioms :: [Exp]
 axioms = map parse [
@@ -75,42 +75,44 @@ newC x index a b c = Map.foldrWithKey (\k rIndex -> insertIfAbsent k (index,rInd
         _ -> c
       _ -> c
 
-minimize :: Exp -> [Exp] -> [Exp] -> Maybe [Exp]
-minimize statement context proof = case helper proof 1 Map.empty Map.empty Map.empty of
-  Nothing -> Nothing
-  Just set -> Just (extract proof 1 set)
+isCorrect :: Exp -> [Exp] -> [Exp] -> Bool
+isCorrect statement context proof = proof /= [] && last proof == statement && helper proof 1 Map.empty Map.empty Map.empty
+  where
+    hypoSet = Set.fromList context
+
+    helper [] _ _ _ _ = True
+    helper (x:xs) index a b c = good && (helper xs (succ index) (newA x index a) (newB x index b) (newC x index a b c))
+      where
+        good = Set.member x hypoSet || getAxiom x /= Nothing || Map.member x c
+
+minimize :: [Exp] -> [Exp] -> [Exp]
+minimize !context !proof = extract proof 1 $ helper proof 1 Map.empty Map.empty Map.empty
   where
     hypoSet :: Set.Set Exp
     hypoSet = Set.fromList context
 
-    helper :: [Exp] -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> Maybe (Set.Set Int)
+    helper :: [Exp] -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> Set.Set Int
     helper [x] index _ _ c =
-      if x /= statement then
-        Nothing
-      else if Set.member x hypoSet || getAxiom x /= Nothing then
-        Just (Set.singleton index)
+      if Set.member x hypoSet || getAxiom x /= Nothing then
+        Set.singleton index
       else
-        case Map.lookup x c of
-          Just (a,b) -> Just (Set.fromList $ a:b:[index])
-          Nothing -> Nothing
-    helper (x:xs) index a b c = let
-      suffix = helper xs (succ index) (newA x index a) (newB x index b) (newC x index a b c)
-      in case suffix of
-        Nothing -> Nothing
-        Just used ->
-          if Set.member x hypoSet || getAxiom x /= Nothing then
-            suffix
-          else case Map.lookup x c of
-            Nothing -> Nothing
-            Just (a,b) -> if Set.notMember index used then suffix else
-              Just (Set.insert a $ Set.insert b used)
+        Set.fromList $ a:b:index:[]
+      where
+        Just (a,b) = Map.lookup x c
+    helper (x:xs) index a b c = suffix `seq`
+      if Set.notMember index suffix || Set.member x hypoSet || getAxiom x /= Nothing then
+        suffix
+      else
+        case Map.lookup x c of {Just (a,b) -> Set.insert a $ Set.insert b suffix}
+      where
+        suffix = (helper xs (succ index) (newA x index a) (newB x index b) (newC x index a b c))
 
     extract :: [Exp] -> Int -> Set.Set Int -> [Exp]
     extract [] _ _ = []
     extract (x:xs) index set = (if Set.member index set then (x:) else id) (extract xs (succ index) set)
 
 annotate :: Exp -> [Exp] -> [Exp] -> [String]
-annotate statement context proof = helper proof 1 Map.empty Map.empty Map.empty
+annotate statement !context !proof = helper proof 1 Map.empty Map.empty Map.empty
   where
     hypoMap :: Map.Map Exp Int
     hypoMap = Map.fromList (zip context [1..])
@@ -130,16 +132,16 @@ annotate statement context proof = helper proof 1 Map.empty Map.empty Map.empty
       ) ++ "] " ++ (show x)
 
 foo :: [String] -> [String]
-foo contents = case minimize statement context proof of
-  Nothing -> ["Proof is incorrect"]
-  Just proof -> (show $ Stmt statement context) : (annotate statement context proof)
+foo !contents =
+  if isCorrect statement context proof then
+    (show $ Stmt statement context) : (annotate statement context $ minimize context proof)
+  else
+    ["Proof is incorrect"]
   where
     (contextS:statementS:[]) = Split.splitOn "|-" (head contents)
     statement = parse statementS
-    context = map parse (filter (\s -> any (not . isSpace) s) (Split.splitOn "," contextS))
-    proof = map parse . tail $ contents
+    context = map parse (filter (any (not . isSpace)) (Split.splitOn "," contextS))
+    proof = map parse $ tail contents
 
 main :: IO ()
-main = do
-    contents <- getContents;
-    mapM_ putStrLn (foo . lines $ contents);
+main = interact (unlines . foo . lines)

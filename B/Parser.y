@@ -1,6 +1,6 @@
 {
 module B.Parser where
-import B.Lexer
+import Data.Char (isSpace,isUpper,isDigit)
 }
 
 %name parseTokens
@@ -31,8 +31,24 @@ Expression : Expression '&' Expression  { Conj $1 $3 }
            | var                        { Var $1 }
 
 {
+data Token
+    = TSym String
+    | TVar String
+    deriving (Eq,Show)
+
+scan :: String -> [Token]
+scan [] = []
+scan (c:cs) = go
+  where
+    var = case span (\x -> isUpper x || isDigit x || x == '\'') (c:cs) of
+      (name,rest) -> (TVar name) : (scan rest)
+    go | isSpace c = scan cs
+       | c == '-'  = (TSym "->") : (scan (tail cs))
+       | isUpper c = var
+       | otherwise = (TSym [c]) : (scan cs)
+
 parse :: String -> Exp
-parse = parseTokens . alexScanTokens
+parse = parseTokens . scan
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"

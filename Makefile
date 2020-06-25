@@ -1,7 +1,7 @@
 all: Main.hs
 	$(MAKE) -C A all
 	$(MAKE) -C B all
-	ghc Main.hs -outputdir ./out
+	ghc -O2 -XBangPatterns Main.hs -outputdir ./out
 
 run: Main
 	./Main
