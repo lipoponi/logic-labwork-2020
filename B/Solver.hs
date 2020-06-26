@@ -4,6 +4,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.List.Split as Split
 import Data.Char (isSpace, isUpper)
+import qualified Data.ByteString.Char8 as B
 
 axioms :: [Exp]
 axioms = map parse [
@@ -46,28 +47,32 @@ getAxiom x = helper 1 axioms
 
     merge :: Map.Map String Exp -> Map.Map String Exp -> Maybe (Map.Map String Exp)
     merge l r = let
-      fn k rv = case (Map.lookup k l) of
-        (Just lv) -> if lv == rv then Just lv else Nothing
+      fn k !rv = case (Map.lookup k l) of
+        (Just lv) -> if lv == rv then Just rv else Nothing
         Nothing -> Just rv
       in case (Map.traverseWithKey fn r) of
         Nothing -> Nothing
         _ -> Just (Map.union l r)
 
 insertIfAbsent :: (Ord k) => k -> a -> Map.Map k a -> Map.Map k a
-insertIfAbsent = Map.insertWith (flip const)
+insertIfAbsent k a map = if Map.member k map then map else Map.insert k a map
 
 newA :: Exp -> Int -> Map.Map Exp Int -> Map.Map Exp Int
 newA = insertIfAbsent
 
 newB :: Exp -> Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Map.Map Exp Int)
-newB x index b = Map.delete x tmpB
+newB x index b = tmpB
   where
     tmpB = case x of
-      Impl l r -> Map.insertWith (flip Map.union) l (Map.singleton r index) b -- check optimization
+      Impl l r ->
+        if Map.member l b then
+          Map.adjust (insertIfAbsent r index) l b
+        else
+          Map.insert l (Map.singleton r index) b
       _ -> b
 
 newC :: Exp -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> Map.Map Exp (Int,Int)
-newC x index a b c = Map.foldrWithKey (\k rIndex -> insertIfAbsent k (index,rIndex)) tmpC (Map.findWithDefault Map.empty x b)
+newC x index a b c = Map.foldlWithKey' (\acc k rIndex -> insertIfAbsent k (index,rIndex) acc) tmpC (Map.findWithDefault Map.empty x b)
   where
     tmpC = case x of
       Impl l r -> case Map.lookup l a of
@@ -143,5 +148,10 @@ foo !contents =
     context = map parse (filter (any (not . isSpace)) (Split.splitOn "," contextS))
     proof = map parse $ tail contents
 
+toString :: B.ByteString -> String
+toString = B.foldr' (:) []
+
 main :: IO ()
-main = interact (unlines . foo . lines)
+main = do
+  contents <- B.getContents
+  putStr (unlines . foo $ (map toString $ B.lines contents))
