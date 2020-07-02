@@ -1,5 +1,6 @@
 {
 module C.Lexer where
+import C.Types
 }
 
 %wrapper "basic"
@@ -13,12 +14,3 @@ tokens :-
     \|\-                        { TSym }
     \-\>                        { TSym }
     [\!\&\|\(\)\@\?\.\=\+\*\']  { TSym }
-
-{
-data Token
-    = TLower Char
-    | TUpper Char
-    | TZero
-    | TSym String
-    deriving (Eq,Show)
-}
