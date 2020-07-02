@@ -1,10 +1,12 @@
-module C.Solver where
-  import C.Common
+module C.Solver (main) where
   import qualified Data.Map.Strict as Map
   import qualified Data.Set as Set
   import Data.List (sort)
-  import C.Schemes (checkSchemes)
-  import C.Axioms (checkAxioms)
+
+  import C.Common
+  import C.Schemes
+  import C.Axioms
+  import C.Rules
 
   annotate :: Int -> Exp -> Either String String
   annotate index x = case result of
@@ -14,7 +16,7 @@ module C.Solver where
       (_,e):_ -> Right $ "Expression " ++ (show index) ++ ": " ++ e
     where
       result :: Either Annotation Errors
-      result = return [] >>= checkSchemes x >>= checkAxioms x -- >>= checkRules x
+      result = return [] >>= checkSchemes x >>= checkAxioms x >>= checkRules x
 
   go :: Exp -> [Exp] -> Int -> [String]
   go header [x] index = (:[]) $ case annotate index x of

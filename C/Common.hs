@@ -1,7 +1,8 @@
 module C.Common (module C.Common, module C.Parser, module C.Types) where
+  import qualified Data.Map.Strict as Map
+  
   import C.Parser
   import C.Types
-  import qualified Data.Map.Strict as Map
 
   morphism :: Exp -> Exp -> Maybe (Map.Map Char Exp)
   morphism = aliases

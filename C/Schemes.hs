@@ -1,7 +1,8 @@
-module C.Schemes where
-  import C.Common
+module C.Schemes (checkSchemes) where
   import qualified Data.Map.Strict as Map
   import qualified Data.Set as Set
+  
+  import C.Common
 
   schemes :: [Exp]
   schemes = map parse [

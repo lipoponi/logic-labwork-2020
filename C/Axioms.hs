@@ -1,4 +1,4 @@
-module C.Axioms where
+module C.Axioms (checkAxioms) where
   import C.Common
 
   axioms :: [(Exp,Int)]
