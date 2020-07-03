@@ -57,11 +57,11 @@ module C.Common (module C.Common, module C.Parser, module C.Types) where
   nextSB _ _ sb = sb
 
   nextSC :: Exp -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> Map.Map Exp (Int,Int)
-  nextSC x index sa sb sc = Map.foldlWithKey' (\acc k rIndex -> Map.insert k (index,rIndex) acc) tmpSC (Map.findWithDefault Map.empty x sb)
+  nextSC x index sa sb sc = Map.foldlWithKey' (\acc k rIndex -> Map.insertWith max k (index,rIndex) acc) tmpSC (Map.findWithDefault Map.empty x sb)
     where
       tmpSC = case x of
         EImpl l r -> case Map.lookup l sa of
-          Just lIndex -> Map.insert r (lIndex,index) sc
+          Just lIndex -> Map.insertWith max r (lIndex,index) sc
           _ -> sc
         _ -> sc
 
