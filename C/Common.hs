@@ -65,17 +65,38 @@ module C.Common (module C.Common, module C.Parser, module C.Types) where
           _ -> sc
         _ -> sc
 
-  extractVars :: Exp -> Set.Set Char
-  extractVars (EVar c) = Set.singleton c
-  extractVars (EInc x) = extractVars x
-  extractVars (ENeg x) = extractVars x
-  extractVars (EHead x) = extractVars x
-  extractVars (EImpl a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EDisj a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EConj a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (ESum a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EMul a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EEquals a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EForall (EVar c) x) = Set.delete c (extractVars x)
-  extractVars (EExists (EVar c) x) = Set.delete c (extractVars x)
-  extractVars _ = Set.empty
+  extractFreeVars :: Exp -> Set.Set Char
+  extractFreeVars (EVar c) = Set.singleton c
+  extractFreeVars (EInc x) = extractFreeVars x
+  extractFreeVars (ENeg x) = extractFreeVars x
+  extractFreeVars (EHead x) = extractFreeVars x
+  extractFreeVars (EImpl a b) = Set.union (extractFreeVars a) (extractFreeVars b)
+  extractFreeVars (EDisj a b) = Set.union (extractFreeVars a) (extractFreeVars b)
+  extractFreeVars (EConj a b) = Set.union (extractFreeVars a) (extractFreeVars b)
+  extractFreeVars (ESum a b) = Set.union (extractFreeVars a) (extractFreeVars b)
+  extractFreeVars (EMul a b) = Set.union (extractFreeVars a) (extractFreeVars b)
+  extractFreeVars (EEquals a b) = Set.union (extractFreeVars a) (extractFreeVars b)
+  extractFreeVars (EForall (EVar c) x) = Set.delete c (extractFreeVars x)
+  extractFreeVars (EExists (EVar c) x) = Set.delete c (extractFreeVars x)
+  extractFreeVars _ = Set.empty
+
+  isFree :: Char -> Exp -> Bool
+  isFree c x = Set.member c (extractFreeVars x)
+
+  isReplacementFree :: Exp -> Char -> Exp -> Bool
+  isReplacementFree t v p = helper p (extractFreeVars t) Set.empty
+    where
+      helper :: Exp -> Set.Set Char -> Set.Set Char -> Bool
+      helper (EVar c) tfree pbound = c == v && Set.empty == Set.intersection tfree pbound || c /= v
+      helper (EInc p) tfree pbound = helper p tfree pbound
+      helper (ENeg p) tfree pbound = helper p tfree pbound
+      helper (EHead p) tfree pbound = helper p tfree pbound
+      helper (EImpl a b) tfree pbound = helper a tfree pbound && helper b tfree pbound
+      helper (EDisj a b) tfree pbound = helper a tfree pbound && helper b tfree pbound
+      helper (EConj a b) tfree pbound = helper a tfree pbound && helper b tfree pbound
+      helper (ESum a b) tfree pbound = helper a tfree pbound && helper b tfree pbound
+      helper (EMul a b) tfree pbound = helper a tfree pbound && helper b tfree pbound
+      helper (EEquals a b) tfree pbound = helper a tfree pbound && helper b tfree pbound
+      helper (EForall (EVar c) p) tfree pbound = c == v || helper p tfree (Set.insert c pbound)
+      helper (EExists (EVar c) p) tfree pbound = c == v || helper p tfree (Set.insert c pbound)
+      helper _ _ _ = True

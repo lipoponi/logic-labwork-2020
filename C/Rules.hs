@@ -9,9 +9,6 @@ module C.Rules (checkRules) where
     Nothing    -> Right e
     Just (k,l) -> Left $ "M.P. " ++ (show k) ++ ", " ++ (show l)
 
-  isFree :: Char -> Exp -> Bool
-  isFree c x = Set.member c (extractVars x)
-
   intro :: Exp -> Map.Map Exp Int -> Errors -> Either Annotation Errors
   intro x sa e = return e >>= forall >>= exists
     where

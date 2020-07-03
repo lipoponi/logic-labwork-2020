@@ -31,24 +31,6 @@ module C.Schemes (checkSchemes) where
         Nothing -> False
         _ -> True
 
-  isFree :: Exp -> Char -> Exp -> Bool
-  isFree a v t = helper a (extractVars t) Set.empty
-    where
-      helper :: Exp -> Set.Set Char -> Set.Set Char -> Bool
-      helper (EVar c) s bound = if c == v then Set.empty == Set.intersection s bound else True
-      helper (EInc x) s bound = helper x s bound
-      helper (ENeg x) s bound = helper x s bound
-      helper (EHead x) s bound = helper x s bound
-      helper (EImpl a b) s bound = helper a s bound && helper b s bound
-      helper (EDisj a b) s bound = helper a s bound && helper b s bound
-      helper (EConj a b) s bound = helper a s bound && helper b s bound
-      helper (ESum a b) s bound = helper a s bound && helper b s bound
-      helper (EMul a b) s bound = helper a s bound && helper b s bound
-      helper (EEquals a b) s bound = helper a s bound && helper b s bound
-      helper (EForall (EVar c) x) s bound = helper x s (Set.insert c bound)
-      helper (EExists (EVar c) x) s bound = helper x s (Set.insert c bound)
-      helper _ _ _ = True
-
   qSchemes :: Exp -> Errors -> Either Annotation Errors
   qSchemes x e = return e >>= scheme11 >>= scheme12
     where
@@ -69,7 +51,7 @@ module C.Schemes (checkSchemes) where
           case Map.lookup c m of
             Nothing -> Left msg
             Just t  ->
-              if isFree a c t then Left msg
+              if isReplacementFree t c a then Left msg
               else Right $ (2,"variable " ++ c : " is not free for term " ++ (show t) ++ " in ?@-axiom.") : e
 
   iScheme :: Exp -> Errors -> Either Annotation Errors
