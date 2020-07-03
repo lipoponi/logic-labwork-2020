@@ -11,12 +11,12 @@ module C.Solver (main) where
   annotate :: Int -> Exp -> Map.Map Exp Int -> Map.Map Exp (Int,Int) -> Either String String
   annotate index x sa sc = case result of
     Left s   -> Left $ "[" ++ (show index) ++ ". " ++ s ++ "] " ++ (show x)
-    Right [] -> Right $ "Expression " ++ (show index) ++ " is not proved."
-    Right es -> case sort es of
+    Right es -> case Map.toAscList es of
+      []      -> Right $ "Expression " ++ (show index) ++ " is not proved."
       (_,e):_ -> Right $ "Expression " ++ (show index) ++ ": " ++ e
     where
       result :: Either Annotation Errors
-      result = return [] >>= checkSchemes x >>= checkAxioms x >>= checkRules x sa sc
+      result = return Map.empty >>= checkSchemes x >>= checkAxioms x >>= checkRules x sa sc
 
   go :: Exp -> [Exp] -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> [String]
   go header [x] index sa sb sc = (++[]) $ case annotate index x sa sc of

@@ -1,4 +1,6 @@
 module C.Types where
+  import qualified Data.Map.Strict as Map
+
   data Token
     = TLower Char
     | TUpper Char
@@ -23,7 +25,7 @@ module C.Types where
     | EExists Exp Exp
     deriving (Eq,Ord)
 
-  type Errors = [(Int,String)]
+  type Errors = Map.Map Int String
   type Annotation = String
 
   showBinOp op l r = "(" ++ (show l) ++ op ++ (show r) ++ ")"

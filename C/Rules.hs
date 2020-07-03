@@ -27,7 +27,7 @@ module C.Rules (checkRules) where
         Nothing -> Right e
         Just k  ->
           if isFree c a then
-            Right $ (1,"variable " ++ c : " occurs free in ?@-rule.") : e
+            Right $ Map.insertWith (flip const) 1 ("variable " ++ c : " occurs free in ?@-rule.") e
           else Left $ "?@-intro " ++ (show k)
 
   checkRules :: Exp -> Map.Map Exp Int -> Map.Map Exp (Int,Int) -> Errors -> Either Annotation Errors

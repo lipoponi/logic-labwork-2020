@@ -52,7 +52,7 @@ module C.Schemes (checkSchemes) where
             Nothing -> Left msg
             Just t  ->
               if isReplacementFree t c a then Left msg
-              else Right $ (2,"variable " ++ c : " is not free for term " ++ (show t) ++ " in ?@-axiom.") : e
+              else Right $ Map.insertWith (flip const) 2 ("variable " ++ c : " is not free for term " ++ (show t) ++ " in ?@-axiom.") e
 
   iScheme :: Exp -> Errors -> Either Annotation Errors
   iScheme (EImpl (EConj a (EForall (EVar x) (EImpl b c))) d) e
