@@ -45,23 +45,20 @@ module C.Schemes (checkSchemes) where
         _ -> Right
 
       common :: Exp -> Char -> Exp -> String -> Errors -> Either Annotation Errors
-      common a c b msg e = case morphismWith a b (\k b -> k == c || EVar k == b) of
-        Nothing -> Right e
-        Just m  ->
-          case Map.lookup c m of
-            Nothing -> Left msg
-            Just t  ->
-              if isReplacementFree t c a then Left msg
-              else Right $ Map.insertWith (flip const) 2 ("variable " ++ c : " is not free for term " ++ (show t) ++ " in ?@-axiom.") e
+      common a c b msg e = case isReplacedWith c (const True) a b of
+        Good t ->
+          if isReplacementFree t c a then Left msg
+          else Right $ Map.insertWith (flip const) 2 ("variable " ++ c : " is not free for term " ++ (show t) ++ " in ?@-axiom.") e
+        Ugly   -> Left msg
+        Bad    -> Right e
 
   iScheme :: Exp -> Errors -> Either Annotation Errors
   iScheme (EImpl (EConj a (EForall (EVar x) (EImpl b c))) d) e
     | b /= d = Right e
-    | b == d = case morphismWith b a (\k b -> k == x && b == EZero || k /= x && EVar k == b) of
-      Nothing -> Right e
-      _       -> case morphismWith b c (\k b -> k == x && b == EInc (EVar k) || k /= x && EVar k == b) of
-        Nothing -> Right e
-        _       -> Left "Ax. sch. A9"
+    | b == d =
+      if (isReplacedWith x (== EZero) b a) /= Bad && (isReplacedWith x (== EInc (EVar x)) b c) /= Bad then
+        Left "Ax. sch. A9"
+      else Right e
   iScheme _ e = Right e
 
   checkSchemes :: Exp -> Errors -> Either Annotation Errors

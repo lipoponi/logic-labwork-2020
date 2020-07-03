@@ -1,6 +1,12 @@
 module C.Types where
   import qualified Data.Map.Strict as Map
 
+  data GBU
+    = Good Exp
+    | Bad
+    | Ugly
+    deriving Eq
+
   data Token
     = TLower Char
     | TUpper Char

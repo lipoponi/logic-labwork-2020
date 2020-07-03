@@ -45,6 +45,47 @@ module C.Common (module C.Common, module C.Parser, module C.Types) where
     Nothing -> Nothing
     Just m  -> if Map.foldlWithKey' (\r k b -> r && p k b) True m then Just m else Nothing
 
+  isReplacedWith :: Char -> (Exp -> Bool) -> Exp -> Exp -> GBU
+  isReplacedWith c predicate a x = aliases a x
+    where
+      aliases :: Exp -> Exp -> GBU
+      aliases a@(EVar name) x =
+        if name == c && predicate x then Good x
+        else if name /= c && x == a then Ugly
+        else Bad 
+      aliases (EPred a) (EPred x) = if a == x then Ugly else Bad
+      aliases EZero EZero = Ugly
+      aliases (EInc a) (EInc x) = aliases a x
+      aliases (ENeg a) (ENeg x) = aliases a x
+      aliases (EHead a) (EHead x) = aliases a x
+      aliases (EImpl al ar) (EImpl xl xr) = stepIn al ar xl xr
+      aliases (EDisj al ar) (EDisj xl xr) = stepIn al ar xl xr
+      aliases (EConj al ar) (EConj xl xr) = stepIn al ar xl xr
+      aliases (ESum al ar) (ESum xl xr) = stepIn al ar xl xr
+      aliases (EMul al ar) (EMul xl xr) = stepIn al ar xl xr
+      aliases (EEquals al ar) (EEquals xl xr) = stepIn al ar xl xr
+      aliases (EForall (EVar ac) a) (EForall (EVar xc) x) =
+        if ac == c then
+          if ac == xc && a == x then Ugly
+          else Bad
+        else if ac == xc then aliases a x
+        else Bad
+      aliases (EExists (EVar ac) a) (EExists (EVar xc) x) =
+        if ac == c then
+          if ac == xc && a == x then Ugly
+          else Bad
+        else if ac == xc then aliases a x
+        else Bad
+      aliases _ _ = Bad
+
+      stepIn :: Exp -> Exp -> Exp -> Exp -> GBU
+      stepIn al ar xl xr = case (aliases al xl,aliases ar xr) of
+        (Bad, _) -> Bad
+        (_, Bad) -> Bad
+        (Ugly, x) -> x
+        (x, Ugly) -> x
+        (Good a, Good x) -> if a == x then Good a else Bad
+
   nextSA :: Exp -> Int -> Map.Map Exp Int -> Map.Map Exp Int
   nextSA = Map.insert
 
