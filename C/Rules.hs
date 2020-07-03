@@ -10,7 +10,7 @@ module C.Rules (checkRules) where
     Just (k,l) -> Left $ "M.P. " ++ (show k) ++ ", " ++ (show l)
 
   intro :: Exp -> Map.Map Exp Int -> Errors -> Either Annotation Errors
-  intro x sa e = return e >>= forall >>= exists
+  intro x sa e = return e >>= exists >>= forall
     where
       forall :: Errors -> Either Annotation Errors
       forall = case x of
