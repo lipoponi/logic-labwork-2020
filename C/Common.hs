@@ -1,5 +1,6 @@
 module C.Common (module C.Common, module C.Parser, module C.Types) where
   import qualified Data.Map.Strict as Map
+  import qualified Data.Set as Set
   
   import C.Parser
   import C.Types
@@ -43,3 +44,38 @@ module C.Common (module C.Common, module C.Parser, module C.Types) where
   morphismWith a x p = case morphism a x of
     Nothing -> Nothing
     Just m  -> if Map.foldlWithKey' (\r k b -> r && p k b) True m then Just m else Nothing
+
+  nextSA :: Exp -> Int -> Map.Map Exp Int -> Map.Map Exp Int
+  nextSA = Map.insert
+
+  nextSB :: Exp -> Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Map.Map Exp Int)
+  nextSB (EImpl l r) index sb = 
+    if Map.member l sb then
+      Map.adjust (Map.insert r index) l sb
+    else
+      Map.insert l (Map.singleton r index) sb
+  nextSB _ _ sb = sb
+
+  nextSC :: Exp -> Int -> Map.Map Exp Int -> Map.Map Exp (Map.Map Exp Int) -> Map.Map Exp (Int,Int) -> Map.Map Exp (Int,Int)
+  nextSC x index sa sb sc = Map.foldlWithKey' (\acc k rIndex -> Map.insert k (index,rIndex) acc) tmpSC (Map.findWithDefault Map.empty x sb)
+    where
+      tmpSC = case x of
+        EImpl l r -> case Map.lookup l sa of
+          Just lIndex -> Map.insert r (lIndex,index) sc
+          _ -> sc
+        _ -> sc
+
+  extractVars :: Exp -> Set.Set Char
+  extractVars (EVar c) = Set.singleton c
+  extractVars (EInc x) = extractVars x
+  extractVars (ENeg x) = extractVars x
+  extractVars (EHead x) = extractVars x
+  extractVars (EImpl a b) = Set.union (extractVars a) (extractVars b)
+  extractVars (EDisj a b) = Set.union (extractVars a) (extractVars b)
+  extractVars (EConj a b) = Set.union (extractVars a) (extractVars b)
+  extractVars (ESum a b) = Set.union (extractVars a) (extractVars b)
+  extractVars (EMul a b) = Set.union (extractVars a) (extractVars b)
+  extractVars (EEquals a b) = Set.union (extractVars a) (extractVars b)
+  extractVars (EForall (EVar c) x) = Set.delete c (extractVars x)
+  extractVars (EExists (EVar c) x) = Set.delete c (extractVars x)
+  extractVars _ = Set.empty

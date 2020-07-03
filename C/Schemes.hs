@@ -31,21 +31,6 @@ module C.Schemes (checkSchemes) where
         Nothing -> False
         _ -> True
 
-  extractVars :: Exp -> Set.Set Char
-  extractVars (EVar c) = Set.singleton c
-  extractVars (EInc x) = extractVars x
-  extractVars (ENeg x) = extractVars x
-  extractVars (EHead x) = extractVars x
-  extractVars (EImpl a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EDisj a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EConj a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (ESum a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EMul a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EEquals a b) = Set.union (extractVars a) (extractVars b)
-  extractVars (EForall (EVar c) x) = Set.delete c (extractVars x)
-  extractVars (EExists (EVar c) x) = Set.delete c (extractVars x)
-  extractVars _ = Set.empty
-
   isFree :: Exp -> Char -> Exp -> Bool
   isFree a v t = helper a (extractVars t) Set.empty
     where
