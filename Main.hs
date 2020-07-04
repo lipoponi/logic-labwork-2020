@@ -1,2 +1,2 @@
 module Main (main) where
-import C.Solver (main)
+import D.Solver (main)

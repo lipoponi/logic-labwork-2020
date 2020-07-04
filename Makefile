@@ -14,4 +14,4 @@ clean:
 	rm -rf ./out Main archive.zip
 
 zip: clean
-	zip -r archive.zip Makefile Main.hs ./A ./B ./C ./Data
+	zip -r archive.zip Makefile Main.hs ./A ./B ./C ./D ./Data
