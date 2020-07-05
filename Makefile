@@ -2,6 +2,7 @@ all: Main.hs
 	$(MAKE) -C A all
 	$(MAKE) -C B all
 	$(MAKE) -C C all
+	$(MAKE) -C D all
 	ghc -O2 -XBangPatterns Main.hs -outputdir ./out
 
 run: Main
@@ -11,6 +12,7 @@ clean:
 	$(MAKE) -C A clean
 	$(MAKE) -C B clean
 	$(MAKE) -C C clean
+	$(MAKE) -C D clean
 	rm -rf ./out Main archive.zip
 
 zip: clean
