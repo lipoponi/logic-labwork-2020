@@ -66,7 +66,7 @@ module D.Solver (main) where
 
       go :: Map.Map Exp Bool -> [Exp] -> [Exp]
       go p [] = reverse $ generateProof p x
-      go p (v:vs) = fproof ++ tproof ++ (excludedMiddleLaw v actualHypos) ++ [
+      go p (v:vs) = fproof ++ tproof ++ (excludedMiddleLaw v) ++ [
           (EImpl (EImpl v a) (EImpl (EImpl (ENeg v) a) (EImpl (EDisj v (ENeg v)) a))),
           (EImpl (EImpl (ENeg v) a) (EImpl (EDisj v (ENeg v)) a)),
           (EImpl (EDisj v (ENeg v)) a),

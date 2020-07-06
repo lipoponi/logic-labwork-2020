@@ -4,8 +4,8 @@ module D.Templates where
   import D.Common
   import D.Types
 
-  excludedMiddleLaw :: Exp -> Set.Set Exp -> [Exp]
-  excludedMiddleLaw x hypos = first ++ second ++ [
+  excludedMiddleLaw :: Exp -> [Exp]
+  excludedMiddleLaw x = first ++ second ++ [
       (EImpl (EImpl (ENeg (EDisj x (ENeg x))) (ENeg x)) (EImpl (EImpl (ENeg (EDisj x (ENeg x))) (ENeg (ENeg x))) (ENeg (ENeg (EDisj x (ENeg x)))))),
       (EImpl (EImpl (ENeg (EDisj x (ENeg x))) (ENeg (ENeg x))) (ENeg (ENeg (EDisj x (ENeg x))))),
       (ENeg (ENeg (EDisj x (ENeg x)))),
@@ -13,15 +13,15 @@ module D.Templates where
       (EDisj x (ENeg x))
     ]
     where
-      first = (EImpl x (EDisj x (ENeg x))) : contraposition x (EDisj x (ENeg x)) hypos ++ [
+      first = (EImpl x (EDisj x (ENeg x))) : contraposition x (EDisj x (ENeg x)) ++ [
           (EImpl (ENeg (EDisj x (ENeg x))) (ENeg x))
         ]
-      second = (EImpl (ENeg x) (EDisj x (ENeg x))) : contraposition (ENeg x) (EDisj x (ENeg x)) hypos ++ [
+      second = (EImpl (ENeg x) (EDisj x (ENeg x))) : contraposition (ENeg x) (EDisj x (ENeg x)) ++ [
           (EImpl (ENeg (EDisj x (ENeg x))) (ENeg (ENeg x)))
         ]
 
-  contraposition :: Exp -> Exp -> Set.Set Exp -> [Exp]
-  contraposition a b hypos = unhypothesize (EImpl a b) hypos $ unhypothesize (ENeg b) (Set.insert (EImpl a b) hypos) [
+  contraposition :: Exp -> Exp -> [Exp]
+  contraposition a b = unhypothesize (EImpl a b) Set.empty $ unhypothesize (ENeg b) (Set.singleton (EImpl a b)) [
       (EImpl (EImpl a b) (EImpl (EImpl a (ENeg b)) (ENeg a))),
       (EImpl a b),
       (EImpl (EImpl a (ENeg b)) (ENeg a)),
@@ -68,7 +68,37 @@ module D.Templates where
 
   -- !l, !r |- !(l | r)
   template5 :: Exp -> Exp -> [Exp]
-  template5 l r = undefined
+  template5 l r = [
+      (ENeg l),
+      (ENeg r),
+      (EImpl (ENeg l) (EImpl (EDisj l r) (ENeg l))),
+      (EImpl (EDisj l r) (ENeg l)),
+      (EImpl l (EImpl l l)),
+      (EImpl (EImpl l (EImpl l l)) (EImpl (EImpl l (EImpl (EImpl l l) l)) (EImpl l l))),
+      (EImpl (EImpl l (EImpl (EImpl l l) l)) (EImpl l l)),
+      (EImpl l (EImpl (EImpl l l) l)),
+      (EImpl l l),
+      (EImpl (ENeg r) (EImpl (ENeg l) (ENeg r))),
+      (EImpl (ENeg l) (ENeg r))
+    ] ++ contraposition (ENeg l) (ENeg r) ++ template13 r ++ [
+      (EImpl (EImpl r (ENeg (ENeg r))) (EImpl (EImpl r (EImpl (ENeg (ENeg r)) (ENeg (ENeg l)))) (EImpl r (ENeg (ENeg l))))),
+      (EImpl (EImpl r (EImpl (ENeg (ENeg r)) (ENeg (ENeg l)))) (EImpl r (ENeg (ENeg l)))),
+      (EImpl (EImpl (ENeg (ENeg r)) (ENeg (ENeg l))) (EImpl r (EImpl (ENeg (ENeg r)) (ENeg (ENeg l))))),
+      (EImpl r (EImpl (ENeg (ENeg r)) (ENeg (ENeg l)))),
+      (EImpl r (ENeg (ENeg l))),
+      (EImpl (ENeg (ENeg l)) l),
+      (EImpl (EImpl (ENeg (ENeg l)) l) (EImpl r (EImpl (ENeg (ENeg l)) l))),
+      (EImpl r (EImpl (ENeg (ENeg l)) l)),
+      (EImpl (EImpl r (ENeg (ENeg l))) (EImpl (EImpl r (EImpl (ENeg (ENeg l)) l)) (EImpl r l))),
+      (EImpl (EImpl r (EImpl (ENeg (ENeg l)) l)) (EImpl r l)),
+      (EImpl r l),
+      (EImpl (EImpl l l) (EImpl (EImpl r l) (EImpl (EDisj l r) l))),
+      (EImpl (EImpl r l) (EImpl (EDisj l r) l)),
+      (EImpl (EDisj l r) l),
+      (EImpl (EImpl (EDisj l r) l) (EImpl (EImpl (EDisj l r) (ENeg l)) (ENeg (EDisj l r)))),
+      (EImpl (EImpl (EDisj l r) (ENeg l)) (ENeg (EDisj l r))),
+      (ENeg (EDisj l r))
+    ]
 
   -- !l, r |- l | r
   template6 :: Exp -> Exp -> [Exp]
