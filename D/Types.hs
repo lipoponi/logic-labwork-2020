@@ -27,23 +27,11 @@ module D.Types where
     show (Statement x (h:[])) = (show h) ++ " " ++ (show $ Statement x [])
     show (Statement x (h:hs)) = (show h) ++ ", " ++ (show $ Statement x hs)
 
+  showBinOp op l r = "(" ++ (show l) ++ " " ++ op ++ " " ++ (show r) ++ ")"
+  
   instance Show Exp where
+    show (EImpl l r) = showBinOp "->" l r
+    show (EDisj l r) = showBinOp "|" l r
+    show (EConj l r) = showBinOp "&" l r
+    show (ENeg inner) = "!" ++ (show inner)
     show (EVar name) = name
-    show (ENeg var@(EVar name)) = "!" ++ (show var)
-    show (ENeg inner@(ENeg _)) = "!" ++ (show inner)
-    show (ENeg inner) = "!(" ++ (show inner) ++ ")"
-    show (EConj l@(EDisj _ _) r@(EDisj _ _)) = "(" ++ (show l) ++ ") & (" ++ (show r) ++ ")"
-    show (EConj l@(EDisj _ _) r@(EImpl _ _)) = "(" ++ (show l) ++ ") & (" ++ (show r) ++ ")"
-    show (EConj l@(EDisj _ _) r) = "(" ++ (show l) ++ ") & " ++ (show r)
-    show (EConj l@(EImpl _ _) r@(EDisj _ _)) = "(" ++ (show l) ++ ") & (" ++ (show r) ++ ")"
-    show (EConj l@(EImpl _ _) r@(EImpl _ _)) = "(" ++ (show l) ++ ") & (" ++ (show r) ++ ")"
-    show (EConj l@(EImpl _ _) r) = "(" ++ (show l) ++ ") & " ++ (show r)
-    show (EConj l r@(EDisj _ _)) = (show l) ++ " & (" ++ (show r) ++ ")"
-    show (EConj l r@(EImpl _ _)) = (show l) ++ " & (" ++ (show r) ++ ")"
-    show (EConj l r) = (show l) ++ " & " ++ (show r)
-    show (EDisj l@(EImpl _ _) r@(EImpl _ _)) = "(" ++ (show l) ++ ") | (" ++ (show r) ++ ")"
-    show (EDisj l@(EImpl _ _) r) = "(" ++ (show l) ++ ") | " ++ (show r)
-    show (EDisj l r@(EImpl _ _)) = (show l) ++ " | (" ++ (show r) ++ ")"
-    show (EDisj l r) = (show l) ++ " | " ++ (show r)
-    show (EImpl l@(EImpl _ _) r) = "(" ++ (show l) ++ ") -> " ++ (show r)
-    show (EImpl l r) = (show l) ++ " -> " ++ (show r)

@@ -31,7 +31,7 @@ module D.Templates where
       (ENeg a)
     ]
 
-  -- !l, !r |- !(l & r)
+  -- !l, !r |- !(l & r) +
   template1 :: Exp -> Exp -> [Exp]
   template1 l r = [
     (EImpl (ENeg l) (EImpl (EConj l r) (ENeg l))),
@@ -42,11 +42,11 @@ module D.Templates where
     (EImpl (EImpl (EConj l r) (ENeg l)) (ENeg (EConj l r))),
     (ENeg (EConj l r))]
 
-  -- !l, r |- !(l & r)
+  -- !l, r |- !(l & r) +
   template2 :: Exp -> Exp -> [Exp]
   template2 = template1
 
-  -- l, !r |- !(l & r)
+  -- l, !r |- !(l & r) +
   template3 :: Exp -> Exp -> [Exp]
   template3 l r = [
     (EImpl (ENeg r) (EImpl (EConj l r) (ENeg r))),
@@ -57,16 +57,16 @@ module D.Templates where
     (EImpl (EImpl (EConj l r) (ENeg r)) (ENeg (EConj l r))),
     (ENeg (EConj l r))]
 
-  -- l, r |- l & r
+  -- l, r |- l & r +
   template4 :: Exp -> Exp -> [Exp]
   template4 l r = [
-    -- l,
-    -- r,
+    l,
+    r,
     (EImpl l (EImpl r (EConj l r))),
     (EImpl r (EConj l r)),
     (EConj l r)]
 
-  -- !l, !r |- !(l | r)
+  -- !l, !r |- !(l | r) +
   template5 :: Exp -> Exp -> [Exp]
   template5 l r = [
       (ENeg l),
@@ -80,7 +80,8 @@ module D.Templates where
       (EImpl l l),
       (EImpl (ENeg r) (EImpl (ENeg l) (ENeg r))),
       (EImpl (ENeg l) (ENeg r))
-    ] ++ contraposition (ENeg l) (ENeg r) ++ template13 r ++ [
+    ] ++ contraposition (ENeg l) (ENeg r) ++ unhypothesize r Set.empty (template13 r) ++ [
+      (EImpl (ENeg (ENeg r)) (ENeg (ENeg l))),
       (EImpl (EImpl r (ENeg (ENeg r))) (EImpl (EImpl r (EImpl (ENeg (ENeg r)) (ENeg (ENeg l)))) (EImpl r (ENeg (ENeg l))))),
       (EImpl (EImpl r (EImpl (ENeg (ENeg r)) (ENeg (ENeg l)))) (EImpl r (ENeg (ENeg l)))),
       (EImpl (EImpl (ENeg (ENeg r)) (ENeg (ENeg l))) (EImpl r (EImpl (ENeg (ENeg r)) (ENeg (ENeg l))))),
@@ -100,7 +101,7 @@ module D.Templates where
       (ENeg (EDisj l r))
     ]
 
-  -- !l, r |- l | r
+  -- !l, r |- l | r +
   template6 :: Exp -> Exp -> [Exp]
   template6 l r = [
       r,
@@ -108,7 +109,7 @@ module D.Templates where
       (EDisj l r)
     ]
 
-  -- l, !r |- l | r
+  -- l, !r |- l | r +
   template7 :: Exp -> Exp -> [Exp]
   template7 l r = [
       l,
@@ -116,19 +117,32 @@ module D.Templates where
       (EDisj l r)
     ]
 
-  -- l, r |- l | r
+  -- l, r |- l | r +
   template8 :: Exp -> Exp -> [Exp]
   template8 = template6
 
-  -- !l, !r |- l -> r
+  -- !l, !r |- l -> r +
   template9 :: Exp -> Exp -> [Exp]
   template9 l r = [
-      l,
+      (ENeg l),
       (EImpl (ENeg l) (EImpl (ENeg r) (ENeg l))),
       (EImpl (ENeg r) (ENeg l))
-    ] ++ contraposition (ENeg r) (ENeg l)
+    ] ++ contraposition (ENeg r) (ENeg l) ++ unhypothesize l Set.empty (template13 l) ++ [
+      (EImpl (ENeg (ENeg l)) (ENeg (ENeg r))),
+      (EImpl (EImpl l (ENeg (ENeg l))) (EImpl (EImpl l (EImpl (ENeg (ENeg l)) (ENeg (ENeg r)))) (EImpl l (ENeg (ENeg r))))),
+      (EImpl (EImpl l (EImpl (ENeg (ENeg l)) (ENeg (ENeg r)))) (EImpl l (ENeg (ENeg r)))),
+      (EImpl (EImpl (ENeg (ENeg l)) (ENeg (ENeg r))) (EImpl l (EImpl (ENeg (ENeg l)) (ENeg (ENeg r))))),
+      (EImpl l (EImpl (ENeg (ENeg l)) (ENeg (ENeg r)))),
+      (EImpl l (ENeg (ENeg r))),
+      (EImpl (EImpl l (ENeg (ENeg r))) (EImpl (EImpl l (EImpl (ENeg (ENeg r)) r)) (EImpl l r))),
+      (EImpl (EImpl l (EImpl (ENeg (ENeg r)) r)) (EImpl l r)),
+      (EImpl (ENeg (ENeg r)) r),
+      (EImpl (EImpl (ENeg (ENeg r)) r) (EImpl l (EImpl (ENeg (ENeg r)) r))),
+      (EImpl l (EImpl (ENeg (ENeg r)) r)),
+      (EImpl l r)
+    ]
 
-  -- !l, r |- l -> r
+  -- !l, r |- l -> r +
   template10 :: Exp -> Exp -> [Exp]
   template10 l r = [
       r,
@@ -136,7 +150,7 @@ module D.Templates where
       (EImpl l r)
     ]
 
-  -- l, !r |- !(l -> r)
+  -- l, !r |- !(l -> r) +
   template11 :: Exp -> Exp -> [Exp]
   template11 l r = [
       (l),
@@ -158,11 +172,11 @@ module D.Templates where
       (ENeg (EImpl (l) (r)))
     ]
 
-  -- l, r |- l -> r
+  -- l, r |- l -> r +
   template12 :: Exp -> Exp -> [Exp]
   template12 = template10
 
-  -- a |- !!a
+  -- a |- !!a +
   template13 :: Exp -> [Exp]
   template13 a = [
       a,
