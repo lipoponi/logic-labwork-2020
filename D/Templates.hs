@@ -122,7 +122,11 @@ module D.Templates where
 
   -- !l, !r |- l -> r
   template9 :: Exp -> Exp -> [Exp]
-  template9 l r = undefined
+  template9 l r = [
+      l,
+      (EImpl (ENeg l) (EImpl (ENeg r) (ENeg l))),
+      (EImpl (ENeg r) (ENeg l))
+    ] ++ contraposition (ENeg r) (ENeg l)
 
   -- !l, r |- l -> r
   template10 :: Exp -> Exp -> [Exp]
