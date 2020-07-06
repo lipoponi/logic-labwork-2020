@@ -68,23 +68,31 @@ module D.Templates where
 
   -- !l, !r |- !(l | r)
   template5 :: Exp -> Exp -> [Exp]
-  template5 l r = []
+  template5 l r = undefined
 
   -- !l, r |- l | r
   template6 :: Exp -> Exp -> [Exp]
-  template6 l r = []
+  template6 l r = [
+      r,
+      (EImpl r (EDisj l r)),
+      (EDisj l r)
+    ]
 
   -- l, !r |- l | r
   template7 :: Exp -> Exp -> [Exp]
-  template7 l r = []
+  template7 l r = [
+      l,
+      (EImpl l (EDisj l r)),
+      (EDisj l r)
+    ]
 
   -- l, r |- l | r
   template8 :: Exp -> Exp -> [Exp]
-  template8 l r = []
+  template8 = template6
 
   -- !l, !r |- l -> r
   template9 :: Exp -> Exp -> [Exp]
-  template9 l r = []
+  template9 l r = undefined
 
   -- !l, r |- l -> r
   template10 :: Exp -> Exp -> [Exp]
@@ -96,7 +104,7 @@ module D.Templates where
 
   -- l, !r |- !(l -> r)
   template11 :: Exp -> Exp -> [Exp]
-  template11 l r = []
+  template11 l r = undefined
 
   -- l, r |- l -> r
   template12 :: Exp -> Exp -> [Exp]
