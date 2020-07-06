@@ -138,7 +138,25 @@ module D.Templates where
 
   -- l, !r |- !(l -> r)
   template11 :: Exp -> Exp -> [Exp]
-  template11 l r = undefined
+  template11 l r = [
+      (l),
+      (ENeg (r)),
+      (EImpl (EImpl l r) (EImpl (EImpl l r) (EImpl l r))),
+      (EImpl (EImpl (EImpl l r) (EImpl (EImpl l r) (EImpl l r))) (EImpl (EImpl (EImpl l r) (EImpl (EImpl (EImpl l r) (EImpl l r)) (EImpl l r))) (EImpl (EImpl l r) (EImpl l r)))),
+      (EImpl (EImpl (EImpl l r) (EImpl (EImpl (EImpl l r) (EImpl l r)) (EImpl l r))) (EImpl (EImpl l r) (EImpl l r))),
+      (EImpl (EImpl l r) (EImpl (EImpl (EImpl l r) (EImpl l r)) (EImpl l r))),
+      (EImpl (EImpl l r) (EImpl l r)),
+      (EImpl (l) (EImpl (EImpl (l) (r)) (l))),
+      (EImpl (EImpl (l) (r)) (l)),
+      (EImpl (EImpl (EImpl (l) (r)) (l)) (EImpl (EImpl (EImpl (l) (r)) (EImpl (l) (r))) (EImpl (EImpl (l) (r)) (r)))),
+      (EImpl (EImpl (EImpl (l) (r)) (EImpl (l) (r))) (EImpl (EImpl (l) (r)) (r))),
+      (EImpl (EImpl (l) (r)) (r)),
+      (EImpl (ENeg (r)) (EImpl (EImpl (l) (r)) (ENeg (r)))),
+      (EImpl (EImpl (l) (r)) (ENeg (r))),
+      (EImpl (EImpl (EImpl (l) (r)) (r)) (EImpl (EImpl (EImpl (l) (r)) (ENeg (r))) (ENeg (EImpl (l) (r))))),
+      (EImpl (EImpl (EImpl (l) (r)) (ENeg (r))) (ENeg (EImpl (l) (r)))),
+      (ENeg (EImpl (l) (r)))
+    ]
 
   -- l, r |- l -> r
   template12 :: Exp -> Exp -> [Exp]
